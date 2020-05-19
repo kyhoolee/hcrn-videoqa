@@ -1,11 +1,31 @@
 import os
 import pandas as pd
 import json
-from datautils import utils
+from preprocess.datautils import utils
 import nltk
 
 import pickle
 import numpy as np
+
+
+
+
+
+
+def load_video_paths_by_request(args, file_path):
+    ''' Load a list of (path,image_id tuples).'''
+    input_paths = []
+    annotation = pd.read_csv(file_path, delimiter='\t')
+    gif_names = list(annotation['gif_name'])
+    keys = list(annotation['key'])
+    print("Number of questions: {}".format(len(gif_names)))
+    for idx, gif in enumerate(gif_names):
+        gif_abs_path = os.path.join(args.video_dir, ''.join([gif, '.gif']))
+        input_paths.append((gif_abs_path, keys[idx]))
+    input_paths = list(set(input_paths))
+    print("Number of unique videos: {}".format(len(input_paths)))
+
+    return input_paths
 
 
 def load_video_paths(args):
@@ -175,12 +195,21 @@ def multichoice_encoding_data(args, vocab, questions, video_names, video_ids, an
     with open(args.output_pt.format(args.question_type, args.question_type, mode), 'wb') as f:
         pickle.dump(obj, f)
 
+
+
+
 def process_questions_openended(args):
     print('Loading data')
-    if args.mode in ["train"]:
-        csv_data = pd.read_csv(args.annotation_file.format("Train", args.question_type), delimiter='\t')
-    else:
-        csv_data = pd.read_csv(args.annotation_file.format("Test", args.question_type), delimiter='\t')
+
+    if args.dataset == 'tgif-qa':
+        if args.mode in ["train"]:
+            csv_data = pd.read_csv(args.annotation_file.format("Train", args.question_type), delimiter='\t')
+        else:
+            csv_data = pd.read_csv(args.annotation_file.format("Test", args.question_type), delimiter='\t')
+    elif args.dataset == 'tgif-qa-infer':
+        csv_data = pd.read_csv(args.annotation_file.format(args.question_type), delimiter='\t')
+
+
     csv_data = csv_data.iloc[np.random.permutation(len(csv_data))]
     questions = list(csv_data['question'])
     answers = list(csv_data['answer'])
@@ -248,10 +277,14 @@ def process_questions_openended(args):
 
 def process_questions_mulchoices(args):
     print('Loading data')
-    if args.mode in ["train", "val"]:
-        csv_data = pd.read_csv(args.annotation_file.format("Train", args.question_type), delimiter='\t')
-    else:
-        csv_data = pd.read_csv(args.annotation_file.format("Test", args.question_type), delimiter='\t')
+    if args.dataset == 'tgif-qa':
+        if args.mode in ["train", "val"]:
+            csv_data = pd.read_csv(args.annotation_file.format("Train", args.question_type), delimiter='\t')
+        else:
+            csv_data = pd.read_csv(args.annotation_file.format("Test", args.question_type), delimiter='\t')
+    elif args.dataset == 'tgif-qa-infer':
+        csv_data = pd.read_csv(args.annotation_file.format(args.question_type), delimiter='\t')
+
     csv_data = csv_data.iloc[np.random.permutation(len(csv_data))]
     questions = list(csv_data['question'])
     answers = list(csv_data['answer'])

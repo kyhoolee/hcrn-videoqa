@@ -19,6 +19,7 @@ Check out our [paper](https://arxiv.org/abs/2002.10698) for details.
 2. Download [TGIF-QA](https://github.com/YunseokJANG/tgif-qa), [MSRVTT-QA, MSVD-QA](https://github.com/xudejing/video-question-answering) dataset and edit absolute paths in `preprocess/preprocess_features.py` and `preprocess/preprocess_questions.py` upon where you locate your data. Default paths are with `/ceph-g/lethao/datasets/{dataset_name}/`.
 
 3. Install dependencies:
+install conda --> follow [Anaconda ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-install-anaconda-on-ubuntu-18-04-quickstart)
 ```bash
 conda create -n hcrn_videoqa python=3.6
 conda activate hcrn_videoqa
@@ -34,6 +35,9 @@ Depending on the task to chose `question_type` out of 4 options: `action, transi
 
 ```
 python preprocess/preprocess_features.py --gpu_id 2 --dataset tgif-qa --model resnet101 --question_type {question_type}
+
+export CUDA_VISIBLE_DEVICES=""
+python3 preprocess/preprocess_features.py --gpu_id 2 --dataset tgif-qa-infer --model resnet101 --question_type action
 ```
     
 2. To extract motion feature:
@@ -42,6 +46,9 @@ python preprocess/preprocess_features.py --gpu_id 2 --dataset tgif-qa --model re
 
 ```
 python preprocess/preprocess_features.py --dataset tgif-qa --model resnext101 --image_height 112 --image_width 112 --question_type {question_type}
+
+
+python3 preprocess/preprocess_features.py --dataset tgif-qa-infer --model resnext101 --image_height 112 --image_width 112 --question_type action
 ```
 
 **Note**: Extracting visual feature takes a long time. You can download our pre-extracted features from [here](https://bit.ly/2TX9rlZ) and save them in `data/tgif-qa/{question_type}/`. Please use the following command to join split files:
@@ -53,14 +60,21 @@ cat tgif-qa_{question_type}_appearance_feat.h5.part* > tgif-qa_{question_type}_a
 #### Proprocess linguistic features
 1. Download [glove pretrained 300d word vectors](http://nlp.stanford.edu/data/glove.840B.300d.zip) to `data/glove/` and process it into a pickle file:
 
- ```
- python txt2pickle.py
+```
+python txt2pickle.py
+python3 txt2pickle.py
 ```
 2. Preprocess train/val/test questions:
 ```
 python preprocess/preprocess_questions.py --dataset tgif-qa --question_type {question_type} --glove_pt data/glove/glove.840.300d.pkl --mode train
-    
-python preprocess/preprocess_questions.py --dataset tgif-qa --question_type {question_type} --mode test
+  
+import nltk
+nltk.download('punkt')
+python3 preprocess/preprocess_questions.py --dataset tgif-qa-infer --question_type action --mode test
+
+
+python3 preprocess/preprocess_questions.py --dataset tgif-qa --question_type frameqa --glove_pt data/glove/glove.840.300d.pkl --mode train
+ 
 ```      
 #### Training
 Choose a suitable config file in `configs/{task}.yml` for one of 4 tasks: `action, transition, count, frameqa` to train the model. For example, to train with action task, run the following command:
@@ -72,8 +86,18 @@ python train.py --cfg configs/tgif_qa_action.yml
 To evaluate the trained model, run the following:
 ```bash
 python validate.py --cfg configs/tgif_qa_action.yml
+
+python3 validate.py --cfg configs/tgif_qa_infer_action.yml
 ```
 **Note**: Pretrained model for action task is available [here](https://drive.google.com/open?id=1xzD4JbuoFYAgJG41eAwBo77i3oVrbKyg). Save the file in `results/expTGIF-QAAction/ckpt/` for evaluation.
+
+
+
+
+
+
+
+
 ## Experiments with MSRVTT-QA and MSVD-QA
 The following is to run experiments with MSRVTT-QA dataset, replace `msrvtt-qa` with `msvd-qa` to run with MSVD-QA dataset.
 #### Preprocessing visual features

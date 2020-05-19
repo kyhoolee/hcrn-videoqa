@@ -6,7 +6,7 @@ exp_name: 'expTGIF-QAAction'
 
 train:
   lr: 0.0001
-  batch_size: 32
+  batch_size: 1
   restore: False
   max_epochs: 25
   word_dim: 300
@@ -21,10 +21,10 @@ val:
 
 test:
   test_num: 0
-  write_preds: False
+  write_preds: True
 
 dataset:
   name: 'tgif-qa-infer'
   question_type: 'action'
-  data_dir: 'data/tgif-qa/action'
-  save_dir: 'results/'
+  data_dir: '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/action'
+  save_dir: '/home/kylee/work/projects/5_vqa/hcrn-videoqa/results/'

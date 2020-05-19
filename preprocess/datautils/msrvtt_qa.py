@@ -1,5 +1,5 @@
 import json
-from datautils import utils
+from preprocess.datautils import utils
 import nltk
 from collections import Counter
 

@@ -10,12 +10,14 @@ import torchvision
 import random
 import numpy as np
 
-from models import resnext
-from datautils import utils
-from datautils import tgif_qa
-from datautils import msrvtt_qa
-from datautils import msvd_qa
+from preprocess.models import resnext
+from preprocess.datautils import utils
+from preprocess.datautils import tgif_qa
+from preprocess.datautils import msrvtt_qa
+from preprocess.datautils import msvd_qa
 
+IS_GPU=False 
+RESNEXT_PATH = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/preprocess/pretrained/resnext-101-kinetics.pth'
 
 def build_resnet():
     if not hasattr(torchvision.models, args.model):
@@ -24,7 +26,8 @@ def build_resnet():
         raise ValueError('Feature extraction only supports ResNets')
     cnn = getattr(torchvision.models, args.model)(pretrained=True)
     model = torch.nn.Sequential(*list(cnn.children())[:-1])
-    model.cuda()
+    if IS_GPU:
+        model.cuda()
     model.eval()
     return model
 
@@ -33,10 +36,11 @@ def build_resnext():
     model = resnext.resnet101(num_classes=400, shortcut_type='B', cardinality=32,
                               sample_size=112, sample_duration=16,
                               last_fc=False)
-    model = model.cuda()
+    if IS_GPU:
+        model = model.cuda()
     model = nn.DataParallel(model, device_ids=None)
-    assert os.path.exists('preprocess/pretrained/resnext-101-kinetics.pth')
-    model_data = torch.load('preprocess/pretrained/resnext-101-kinetics.pth', map_location='cpu')
+    assert os.path.exists(RESNEXT_PATH)
+    model_data = torch.load(RESNEXT_PATH, map_location='cpu')
     model.load_state_dict(model_data['state_dict'])
     model.eval()
     return model
@@ -55,7 +59,11 @@ def run_batch(cur_batch, model):
 
     image_batch = np.concatenate(cur_batch, 0).astype(np.float32)
     image_batch = (image_batch / 255.0 - mean) / std
-    image_batch = torch.FloatTensor(image_batch).cuda()
+    if IS_GPU:
+        image_batch = torch.FloatTensor(image_batch).cuda()
+    else:
+        image_batch = torch.FloatTensor(image_batch)
+
     with torch.no_grad():
         image_batch = torch.autograd.Variable(image_batch)
 
@@ -137,7 +145,10 @@ def generate_h5(model, video_ids, num_clips, outfile):
     Returns:
         h5 file containing visual features of splitted clips.
     """
-    if args.dataset == "tgif-qa":
+    if args.dataset == "tgif-qa-infer":
+        if not os.path.exists('data/tgif-qa-infer/{}'.format(args.question_type)):
+            os.makedirs('data/tgif-qa-infer/{}'.format(args.question_type))
+    elif args.dataset == "tgif-qa":
         if not os.path.exists('data/tgif-qa/{}'.format(args.question_type)):
             os.makedirs('data/tgif-qa/{}'.format(args.question_type))
     else:
@@ -153,9 +164,13 @@ def generate_h5(model, video_ids, num_clips, outfile):
         _t = {'misc': utils.Timer()}
         for i, (video_path, video_id) in enumerate(video_ids):
             _t['misc'].tic()
+            print(video_path, video_id)
+
             clips, valid = extract_clips_with_consecutive_frames(video_path, num_clips=num_clips, num_frames_per_clip=16)
+            
             if args.feature_type == 'appearance':
                 clip_feat = []
+
                 if valid:
                     for clip_id, clip in enumerate(clips):
                         feats = run_batch(clip, model)  # (16, 2048)
@@ -163,14 +178,20 @@ def generate_h5(model, video_ids, num_clips, outfile):
                         clip_feat.append(feats)
                 else:
                     clip_feat = np.zeros(shape=(num_clips, 16, 2048))
+
                 clip_feat = np.asarray(clip_feat)  # (8, 16, 2048)
                 if feat_dset is None:
                     C, F, D = clip_feat.shape
                     feat_dset = fd.create_dataset('resnet_features', (dataset_size, C, F, D),
                                                   dtype=np.float32)
                     video_ids_dset = fd.create_dataset('ids', shape=(dataset_size,), dtype=np.int)
+
+
             elif args.feature_type == 'motion':
-                clip_torch = torch.FloatTensor(np.asarray(clips)).cuda()
+                if IS_GPU:
+                    clip_torch = torch.FloatTensor(np.asarray(clips)).cuda()
+                else:
+                    clip_torch = torch.FloatTensor(np.asarray(clips))
                 if valid:
                     clip_feat = model(clip_torch)  # (8, 2048)
                     clip_feat = clip_feat.squeeze()
@@ -194,11 +215,71 @@ def generate_h5(model, video_ids, num_clips, outfile):
                               _t['misc'].average_time * (dataset_size - i1) / 3600))
 
 
+def preprocess_infer_motion(video_paths, request_id, question_type):
+    parser = argparse.ArgumentParser()
+    global args
+    args = parser.parse_args()
+    # dataset info
+    args.dataset = 'tgif-qa-infer'
+    args.question_type = question_type # choices=['frameqa', 'count', 'transition', 'action', 'none']
+    # image sizes
+    args.num_clips = 8
+    # or memory exception
+    args.image_height = 112
+    args.image_width = 112
+    # network params
+    args.model = 'resnext101'
+    args.feature_type = 'motion'
+    args.seed = 666
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    
+    # video_paths = [(request_video_file, 1)] #tgif_qa.load_video_paths_by_request(args, request_file)
+    # load model
+    model = build_resnext()
+
+    args.outfile = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/{}/{}_{}_{}_feat_{}.h5'
+    outfile_path = args.outfile.format(args.question_type, args.dataset, args.question_type, args.feature_type, request_id)
+    print(outfile_path)
+    generate_h5(model, video_paths, args.num_clips, outfile_path)
+
+
+
+def preprocess_infer_appearance(video_paths, request_id, question_type):
+    parser = argparse.ArgumentParser()
+    global args
+    args = parser.parse_args()
+    # dataset info
+    args.dataset = 'tgif-qa-infer'
+    args.question_type = question_type # choices=['frameqa', 'count', 'transition', 'action', 'none']
+    # image sizes
+    args.num_clips = 8
+    args.image_height = 224
+    args.image_width = 224
+    # network params
+    args.model = 'resnet101'
+    args.feature_type = 'appearance'
+    args.seed = 666
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    
+    # video_paths = [(request_video_file, 1)] #tgif_qa.load_video_paths_by_request(args, request_file)
+    # load model
+    model = build_resnet()
+
+    args.outfile = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/{}/{}_{}_{}_feat_{}.h5'
+    outfile_path = args.outfile.format(args.question_type, args.dataset, args.question_type, args.feature_type, request_id)
+    print(outfile_path)
+    generate_h5(model, video_paths, args.num_clips, outfile_path)
+
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu_id', type=int, default=2, help='specify which gpu will be used')
+    parser.add_argument('--gpu_id', type=int, default=0, help='specify which gpu will be used')
     # dataset info
-    parser.add_argument('--dataset', default='tgif-qa', choices=['tgif-qa', 'msvd-qa', 'msrvtt-qa'], type=str)
+    parser.add_argument('--dataset', default='tgif-qa', choices=['tgif-qa', 'tgif-qa-infer', 'msvd-qa', 'msrvtt-qa'], type=str)
     parser.add_argument('--question_type', default='none', choices=['frameqa', 'count', 'transition', 'action', 'none'], type=str)
     # output
     parser.add_argument('--out', dest='outfile',
@@ -219,11 +300,31 @@ if __name__ == '__main__':
         args.feature_type = 'motion'
     else:
         raise Exception('Feature type not supported!')
-    # set gpu
-    if args.model != 'resnext101':
-        torch.cuda.set_device(args.gpu_id)
+
+    # inferencing not use GPU
+    if args.dataset != 'tgif-qa-infer':
+        # set gpu
+        if args.model != 'resnext101':
+            torch.cuda.set_device(args.gpu_id)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+
+    # annotate inference file
+    if args.dataset == 'tgif-qa-infer':
+        args.annotation_file = '/home/kylee/work/projects/5_vqa/dataset/tgif-qa/infer_{}_question.csv'
+        args.video_dir = '/home/kylee/work/projects/5_vqa/dataset/video'
+        
+        video_paths = tgif_qa.load_video_paths(args)
+        # random.shuffle(video_paths)
+        # load model
+        if args.model == 'resnet101':
+            model = build_resnet()
+        elif args.model == 'resnext101':
+            model = build_resnext()
+
+        args.outfile = 'data/tgif-qa-infer/{}/{}_{}_{}_feat.h5'
+        outfile_path = args.outfile.format(args.question_type, args.dataset, args.question_type, args.feature_type)
+        generate_h5(model, video_paths, args.num_clips, outfile_path)
 
     # annotation files
     if args.dataset == 'tgif-qa':
@@ -239,6 +340,8 @@ if __name__ == '__main__':
             model = build_resnext()
         generate_h5(model, video_paths, args.num_clips,
                     args.outfile.format(args.dataset, args.question_type, args.dataset, args.question_type, args.feature_type))
+    
+    
     elif args.dataset == 'msrvtt-qa':
         args.annotation_file = '/ceph-g/lethao/datasets/msrvtt/annotations/{}_qa.json'
         args.video_dir = '/ceph-g/lethao/datasets/msrvtt/videos/'
@@ -252,6 +355,7 @@ if __name__ == '__main__':
         generate_h5(model, video_paths, args.num_clips,
                     args.outfile.format(args.dataset, args.dataset, args.feature_type))
 
+    
     elif args.dataset == 'msvd-qa':
         args.annotation_file = '/ceph-g/lethao/datasets/msvd/MSVD-QA/{}_qa.json'
         args.video_dir = '/ceph-g/lethao/datasets/msvd/MSVD-QA/video/'

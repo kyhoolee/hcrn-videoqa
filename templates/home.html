@@ -1,0 +1,75 @@
+<!doctype html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>
+        $(document).ready(function () {
+            
+
+            $("form#data").submit(function(e) {
+                console.log('Hello click button');
+                e.preventDefault();    
+                var formData = new FormData(this);
+
+                $("#overlay").fadeIn(300);
+                
+                $("#btnSubmit").attr('disabled','disabled');
+
+                $.ajax({
+                    url: '/process',
+                    enctype: 'multipart/form-data',
+                    type: 'POST',
+                    data: formData,
+                    success: function (data) {
+                        //alert(data);
+                        $("#result").text(data);
+                        $("#btnSubmit").removeAttr('disabled');
+                        $("#overlay").fadeOut(300);
+                    },
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    error: function (e) {
+
+                        $("#result").text(e.responseText);
+                        console.log("ERROR : ", e);
+                        $("#btnSubmit").prop("disabled", false);
+
+                    }
+                }).done(function() {
+                    $("#overlay").fadeOut(300);
+                });
+            });
+
+            
+
+        });
+        
+        </script>
+
+        <title>Upload new File</title>
+    
+    </head>
+    
+    <body>
+        <h1>Test question-answering on multi-choice action with Gif video</h1>
+        <form id="data" action="/process" method=post enctype=multipart/form-data>
+            <p>Gif file: <input type=file name=file></p>
+            <p>Question: <input name="question"></p>
+            <p>List of answer choices</p>
+            <p>0: <input name="a1"></p>
+            <p>1: <input name="a2"></p>
+            <p>2: <input name="a3"></p>
+            <p>3: <input name="a4"></p>
+            <p>4: <input name="a5"></p>
+            <p>Your preference answer index</p>
+            <p>answer: <input name="answer"></p>   
+            <p><input id="btnSubmit" type=submit value=Submit></p>
+        </form>
+        <div id="overlay">
+            <div class="cv-spinner">
+                <span class="spinner"></span>
+            </div>
+        </div>
+        <span id="result"></span>
+    </body>
+    

@@ -1,8 +1,8 @@
-gpu_id: 2
+gpu_id: 1
 multi_gpus: False
 num_workers: 4
 seed: 666
-exp_name: 'expTGIF-QAAction'
+exp_name: 'expTGIF-QAFrameQA'
 
 train:
   lr: 0.0001
@@ -16,6 +16,7 @@ train:
   k_max_clip_level: 8
   spl_resolution: 1
 
+
 val:
   flag: True
 
@@ -25,6 +26,6 @@ test:
 
 dataset:
   name: 'tgif-qa-infer'
-  question_type: 'action'
-  data_dir: 'data/tgif-qa/action'
-  save_dir: 'results/'
+  question_type: 'frameqa'
+  data_dir: '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/frameqa'
+  save_dir: '/home/kylee/work/projects/5_vqa/hcrn-videoqa/results/'
