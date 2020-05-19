@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, redirect, url_for, render_template
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 import csv
 import os
 import uuid 
