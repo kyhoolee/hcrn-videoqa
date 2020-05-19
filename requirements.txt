@@ -1,4 +1,5 @@
 flask
+dotmap
 easydict
 h5py
 nltk
