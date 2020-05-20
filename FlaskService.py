@@ -16,6 +16,8 @@ UPLOAD_FOLDER = _dir + '/resources/tgif-qa/video/'
 print(UPLOAD_FOLDER)
 ALLOWED_EXTENSIONS = set(['gif'])
 
+BASE_PATH = '/videoqa'
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -41,7 +43,7 @@ def allowed_file(filename):
 def gen_key():
     return str(uuid.uuid4().hex[:8])
 
-@app.route("/process", methods=['GET', 'POST'])
+@app.route(BASE_PATH + "/process", methods=['GET', 'POST'])
 def process():
     gc.collect()
     if request.method == 'POST':
@@ -91,7 +93,7 @@ def process():
         else: 
             return 'Error file video extension - must be GIF'
 
-@app.route("/", methods=['GET'])
+@app.route(BASE_PATH + "/", methods=['GET'])
 def index():
     # gif_name	question	a1	a2	a3	a4	a5	answer	vid_id	key
     return render_template('home.html')
