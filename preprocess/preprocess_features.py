@@ -192,6 +192,7 @@ def generate_h5(model, video_ids, num_clips, outfile):
                     clip_torch = torch.FloatTensor(np.asarray(clips)).cuda()
                 else:
                     clip_torch = torch.FloatTensor(np.asarray(clips))
+                    
                 if valid:
                     clip_feat = model(clip_torch)  # (8, 2048)
                     clip_feat = clip_feat.squeeze()

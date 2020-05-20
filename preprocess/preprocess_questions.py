@@ -23,8 +23,8 @@ def process_question(request_id, question_type, annotate_file):
 
     
     args.annotation_file = annotate_file
-    args.output_pt = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/{}/tgif-qa-infer_{}_{}_questions_' + str(request_id) + '.pt'
-    args.vocab_json = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/{}/tgif-qa-infer_{}_vocab.json'
+    args.output_pt = 'data/tgif-qa-infer/{}/tgif-qa-infer_{}_{}_questions_' + str(request_id) + '.pt'
+    args.vocab_json = 'data/tgif-qa-infer/{}/tgif-qa-infer_{}_vocab.json'
 
     if args.question_type in ['frameqa', 'count']:
         tgif_qa.process_questions_openended(args)
