@@ -238,7 +238,7 @@ def preprocess_infer_motion(video_paths, request_id, question_type):
     # load model
     model = build_resnext()
 
-    args.outfile = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/{}/{}_{}_{}_feat_{}.h5'
+    args.outfile = 'data/tgif-qa-infer/{}/{}_{}_{}_feat_{}.h5'
     outfile_path = args.outfile.format(args.question_type, args.dataset, args.question_type, args.feature_type, request_id)
     print(outfile_path)
     generate_h5(model, video_paths, args.num_clips, outfile_path)
@@ -267,7 +267,7 @@ def preprocess_infer_appearance(video_paths, request_id, question_type):
     # load model
     model = build_resnet()
 
-    args.outfile = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/{}/{}_{}_{}_feat_{}.h5'
+    args.outfile = 'data/tgif-qa-infer/{}/{}_{}_{}_feat_{}.h5'
     outfile_path = args.outfile.format(args.question_type, args.dataset, args.question_type, args.feature_type, request_id)
     print(outfile_path)
     generate_h5(model, video_paths, args.num_clips, outfile_path)
@@ -311,8 +311,8 @@ if __name__ == '__main__':
 
     # annotate inference file
     if args.dataset == 'tgif-qa-infer':
-        args.annotation_file = '/home/kylee/work/projects/5_vqa/dataset/tgif-qa/infer_{}_question.csv'
-        args.video_dir = '/home/kylee/work/projects/5_vqa/dataset/video'
+        args.annotation_file = 'resource/tgif-qa/csv/infer_{}_question.csv'
+        args.video_dir = 'resources/tgif-qa/video/'
         
         video_paths = tgif_qa.load_video_paths(args)
         # random.shuffle(video_paths)

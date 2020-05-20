@@ -99,14 +99,14 @@ def process_final(request_id, question_type, question_model):
         "dataset": {
             "name": "tgif-qa-infer", 
             "question_type": "%question_type%", 
-            "data_dir": "/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/tgif-qa-infer/%question_type%", 
+            "data_dir": "data/tgif-qa-infer/%question_type%", 
             "appearance_feat": "{}_{}_appearance_feat_%req%.h5", 
             "motion_feat": "{}_{}_motion_feat_%req%.h5", 
             "vocab_json": "{}_{}_vocab.json", 
             "train_question_pt": "{}_{}_train_questions.pt", 
             "val_question_pt": "{}_{}_val_questions.pt", 
             "test_question_pt": "{}_{}_test_questions_%req%.pt", 
-            "save_dir": "/home/kylee/work/projects/5_vqa/hcrn-videoqa/results/%question_model%/"
+            "save_dir": "results/%question_model%/"
         }, 
         "exp_name": "%question_model%"
     }
