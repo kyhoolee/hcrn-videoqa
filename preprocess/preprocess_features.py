@@ -17,7 +17,7 @@ from preprocess.datautils import msrvtt_qa
 from preprocess.datautils import msvd_qa
 
 IS_GPU=False 
-RESNEXT_PATH = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/data/preprocess/pretrained/resnext-101-kinetics.pth'
+RESNEXT_PATH = 'data/preprocess/pretrained/resnext-101-kinetics.pth'
 
 def build_resnet():
     if not hasattr(torchvision.models, args.model):
