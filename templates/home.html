@@ -1,18 +1,23 @@
 <!doctype html>
-    <head>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script>
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
         $(document).ready(function () {
-            
 
-            $("form#data").submit(function(e) {
+
+            $("form#dataAction").submit(function (e) {
                 console.log('Hello click button');
-                e.preventDefault();    
+                e.preventDefault();
                 var formData = new FormData(this);
+                formData.append('question_type', 'action')
+                //console.log(formData)
 
-                $("#overlay").fadeIn(300);
-                
-                $("#btnSubmit").attr('disabled','disabled');
+                $("#overlayAction").fadeIn(300);
+
+                $("#btnActionSubmit").attr('disabled', 'disabled');
+                $(".tablink").attr('disabled', 'disabled');
 
                 $.ajax({
                     url: '/videoqa/process',
@@ -21,38 +26,225 @@
                     data: formData,
                     success: function (data) {
                         //alert(data);
-                        $("#result").text(data);
-                        $("#btnSubmit").removeAttr('disabled');
-                        $("#overlay").fadeOut(300);
+                        $("#resultAction").text(data);
+                        $("#btnActionSubmit").removeAttr('disabled');
+                        $(".tablink").removeAttr('disabled');
+                        $("#overlayAction").fadeOut(300);
                     },
                     cache: false,
                     contentType: false,
                     processData: false,
                     error: function (e) {
 
-                        $("#result").text(e.responseText);
+                        $("#resultAction").text(e.responseText);
                         console.log("ERROR : ", e);
-                        $("#btnSubmit").prop("disabled", false);
+                        $("#btnActionSubmit").removeAttr('disabled');
+                        $(".tablink").removeAttr('disabled');
 
                     }
-                }).done(function() {
-                    $("#overlay").fadeOut(300);
+                }).done(function () {
+                    $("#overlayAction").fadeOut(300);
                 });
             });
 
-            
+            $("form#dataFrameQA").submit(function (e) {
+                console.log('Hello click button');
+                e.preventDefault();
+                var formData = new FormData(this);
+                formData.append('question_type', 'frameqa')
+                //console.log(formData)
+
+                $("#overlayFrameQA").fadeIn(300);
+
+                $("#btnFrameQASubmit").attr('disabled', 'disabled');
+                $(".tablink").attr('disabled', 'disabled');
+
+                $.ajax({
+                    url: '/videoqa/process',
+                    enctype: 'multipart/form-data',
+                    type: 'POST',
+                    data: formData,
+                    success: function (data) {
+                        //alert(data);
+                        $("#resultFrameQA").text(data);
+                        $("#btnFrameQASubmit").removeAttr('disabled');
+                        $(".tablink").removeAttr('disabled');
+                        $("#overlayFrameQA").fadeOut(300);
+                    },
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    error: function (e) {
+
+                        $("#resultFrameQA").text(e.responseText);
+                        console.log("ERROR : ", e);
+                        $("#btnFrameQASubmit").removeAttr('disabled');
+                        $(".tablink").removeAttr('disabled');
+
+                    }
+                }).done(function () {
+                    $("#overlayFrameQA").fadeOut(300);
+                });
+            });
+
+
+            $("form#dataTransition").submit(function (e) {
+                console.log('Hello click button');
+                e.preventDefault();
+                var formData = new FormData(this);
+                formData.append('question_type', 'transition')
+                //console.log(formData)
+
+                $("#overlayTransition").fadeIn(300);
+
+                $("#btnTransitionSubmit").attr('disabled', 'disabled');
+                $(".tablink").attr('disabled', 'disabled');
+
+                $.ajax({
+                    url: '/videoqa/process',
+                    enctype: 'multipart/form-data',
+                    type: 'POST',
+                    data: formData,
+                    success: function (data) {
+                        //alert(data);
+                        $("#resultTransition").text(data);
+                        $("#btnTransitionSubmit").removeAttr('disabled');
+                        $(".tablink").removeAttr('disabled');
+                        $("#overlayTransition").fadeOut(300);
+                    },
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    error: function (e) {
+
+                        $("#resultTransition").text(e.responseText);
+                        console.log("ERROR : ", e);
+                        $("#btnTransitionSubmit").removeAttr('disabled');
+                        $(".tablink").removeAttr('disabled');
+
+                    }
+                }).done(function () {
+                    $("#overlayTransition").fadeOut(300);
+                });
+            });
+
+
+            $("form#dataCount").submit(function (e) {
+                console.log('Hello click button');
+                e.preventDefault();
+                var formData = new FormData(this);
+                formData.append('question_type', 'count')
+                //console.log(formData)
+
+                $("#overlayCount").fadeIn(300);
+
+                $("#btnCountSubmit").attr('disabled', 'disabled');
+                $(".tablink").attr('disabled', 'disabled');
+
+                $.ajax({
+                    url: '/videoqa/process',
+                    enctype: 'multipart/form-data',
+                    type: 'POST',
+                    data: formData,
+                    success: function (data) {
+                        //alert(data);
+                        $("#resultCount").text(data);
+                        $("#btnCountSubmit").removeAttr('disabled');
+                        $(".tablink").removeAttr('disabled');
+                        $("#overlayCount").fadeOut(300);
+                    },
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    error: function (e) {
+
+                        $("#resultCount").text(e.responseText);
+                        console.log("ERROR : ", e);
+                        $("#btnCountSubmit").removeAttr('disabled');
+                        $(".tablink").removeAttr('disabled');
+
+                    }
+                }).done(function () {
+                    $("#overlayCount").fadeOut(300);
+                });
+            });                        
 
         });
-        
-        </script>
 
-        <title>Upload new File</title>
-    
-    </head>
-    
-    <body>
-        <h1>Test question-answering on multi-choice action with Gif video</h1>
-        <form id="data" action="/process" method=post enctype=multipart/form-data>
+    </script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        /* Set height of body and the document to 100% */
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial;
+        }
+
+        /* Style tab links */
+        .tablink {
+            background-color: #555;
+            /*color: white;*/
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            font-size: 17px;
+            width: 25%;
+        }
+
+        .tablink:hover {
+            background-color: #777;
+        }
+
+        /* Style the tab content (and add height:100% for full page content) */
+        .tabcontent {
+            /* color: white; */
+            display: none;
+            padding: 100px 20px;
+            height: 100%;
+        }
+
+        /* #Action {
+        background-color: red;
+        }
+
+        #Frameqa {
+            background-color: green;
+        }
+
+        #Transition {
+            background-color: blue;
+        }
+
+        #Count {
+            background-color: orange;
+        }  */
+    </style>
+
+    <title>Upload new File</title>
+
+</head>
+
+
+
+
+<body>
+    <button class="tablink" onclick="openPage('Action', this, 'red')" id="defaultOpen">Action</button>
+    <button class="tablink" onclick="openPage('Frameqa', this, 'green')">Frameqa</button>
+    <button class="tablink" onclick="openPage('Transition', this, 'blue')">Transition</button>
+    <button class="tablink" onclick="openPage('Count', this, 'orange')">Count</button>
+
+    <div id="Action" class="tabcontent">
+        <h1>TGIF-QA action - multiple choices question</h1>
+        <form id="dataAction" action="/process" method=post enctype=multipart/form-data>
             <p>Gif file: <input type=file name=file></p>
             <p>Question: <input name="question"></p>
             <p>List of answer choices</p>
@@ -62,14 +254,94 @@
             <p>3: <input name="a4"></p>
             <p>4: <input name="a5"></p>
             <p>Your preference answer index</p>
-            <p>answer: <input name="answer"></p>   
-            <p><input id="btnSubmit" type=submit value=Submit></p>
+            <p>answer: <input name="answer"></p>
+            <p><input id="btnActionSubmit" type=submit value=Submit></p>
         </form>
-        <div id="overlay">
+        <div id="overlayAction">
             <div class="cv-spinner">
                 <span class="spinner"></span>
             </div>
         </div>
-        <span id="result"></span>
-    </body>
-    
+        <span id="resultAction"></span>
+    </div>
+
+    <div id="Frameqa" class="tabcontent">
+        <h1>TGIF-QA frameqa - openended question</h1>
+        <form id="dataFrameQA" action="/process" method=post enctype=multipart/form-data>
+            <p>Gif file: <input type=file name=file></p>
+            <p>Question: <input name="question"></p>
+            <p>Your preference answer</p>
+            <p>answer: <input name="answer"></p>
+            <p><input id="btnFrameQASubmit" type=submit value=Submit></p>
+        </form>
+        <div id="overlayFrameQA">
+            <div class="cv-spinner">
+                <span class="spinner"></span>
+            </div>
+        </div>
+        <span id="resultFrameQA"></span>
+    </div>
+
+    <div id="Transition" class="tabcontent">
+        <h1>TGIF-QA action - multiple choices question</h1>
+        <form id="dataTransition" action="/process" method=post enctype=multipart/form-data>
+            <p>Gif file: <input type=file name=file></p>
+            <p>Question: <input name="question"></p>
+            <p>List of answer choices</p>
+            <p>0: <input name="a1"></p>
+            <p>1: <input name="a2"></p>
+            <p>2: <input name="a3"></p>
+            <p>3: <input name="a4"></p>
+            <p>4: <input name="a5"></p>
+            <p>Your preference answer index</p>
+            <p>answer: <input name="answer"></p>
+            <p><input id="btnTransitionSubmit" type=submit value=Submit></p>
+        </form>
+        <div id="overlayTransition">
+            <div class="cv-spinner">
+                <span class="spinner"></span>
+            </div>
+        </div>
+        <span id="resultTransition"></span>
+    </div>
+
+    <div id="Count" class="tabcontent">
+        <h1>TGIF-QA count - openended question</h1>
+        <form id="dataCount" action="/process" method=post enctype=multipart/form-data>
+            <p>Gif file: <input type=file name=file></p>
+            <p>Question: <input name="question"></p>
+            <p>Your preference answer</p>
+            <p>answer: <input name="answer"></p>
+            <p><input id="btnCountSubmit" type=submit value=Submit></p>
+        </form>
+        <div id="overlayCount">
+            <div class="cv-spinner">
+                <span class="spinner"></span>
+            </div>
+        </div>
+        <span id="resultCount"></span>
+    </div>
+
+    <script>
+        //gif_name	question	answer	vid_id	key
+        function openPage(pageName, elmnt, color) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablink");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].style.backgroundColor = "";
+            }
+            document.getElementById(pageName).style.display = "block";
+            elmnt.style.backgroundColor = color;
+        }
+
+        // Get the element with id="defaultOpen" and click on it
+        document.getElementById("defaultOpen").click();
+    </script>
+
+</body>
+
+</html>

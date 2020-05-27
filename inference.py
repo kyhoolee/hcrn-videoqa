@@ -36,12 +36,12 @@ def load_video_paths_by_request(video_dir, file_path):
 
 def sample_process_all():
     request_id = 'req1'
-    question_type = 'action'
+    question_type = 'count'
 
 
-    annotation_file = '/home/kylee/work/projects/5_vqa/dataset/tgif-qa/infer_{}_question_' + str(request_id) + '.csv'
-    video_dir = '/home/kylee/work/projects/5_vqa/dataset/video'
-    question_model = 'expTGIF-QAAction'
+    annotation_file = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/resources/tgif-qa/csv/infer_{}_question_' + str(request_id) + '.csv'
+    video_dir = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/resources/tgif-qa/video/'
+    question_model = 'expTGIF-QACount'
 
     process_all(request_id, question_type, question_model, annotation_file, video_dir)
 

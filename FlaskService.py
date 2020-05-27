@@ -18,6 +18,13 @@ ALLOWED_EXTENSIONS = set(['gif'])
 
 BASE_PATH = '/videoqa'
 
+question_type_model = {
+    'action': 'expTGIF-QAAction',
+    'frameqa': 'expTGIF-QAFrameQA',
+    'transition': 'expTGIF-QATransition',
+    'count': 'expTGIF-QACount',    
+}
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -51,39 +58,57 @@ def process():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             question = request.form['question']
-            a1 = request.form['a1']
-            a2 = request.form['a2']
-            a3 = request.form['a3']
-            a4 = request.form['a4']
-            a5 = request.form['a5']
+            question_type = request.form['question_type']
+            
             answer = request.form['answer']
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
             unique_key = gen_key()
-            data_dict = [{
-                'gif_name': str(filename),
-                'question': str(question),
-                'a1': str(a1),
-                'a2': str(a2),
-                'a3': str(a3),
-                'a4': str(a4),
-                'a5': str(a5),
-                'answer': str(answer),
-                'vid_id': str(unique_key),
-                'key': 1
 
-            }]
+            data_dict = []
+            if question_type == 'action' or question_type == 'transition':
+                a1 = request.form['a1']
+                a2 = request.form['a2']
+                a3 = request.form['a3']
+                a4 = request.form['a4']
+                a5 = request.form['a5']
+                data_dict = [{
+                    'gif_name': str(filename),
+                    'question': str(question),
+                    'a1': str(a1),
+                    'a2': str(a2),
+                    'a3': str(a3),
+                    'a4': str(a4),
+                    'a5': str(a5),
+                    'answer': str(answer),
+                    'vid_id': str(unique_key),
+                    'key': 1
+
+                }]
+            elif question_type == 'frameqa' or question_type == 'count':
+                data_dict = [{
+                    'gif_name': str(filename),
+                    'question': str(question),
+                    'answer': str(answer),
+                    'vid_id': str(unique_key),
+                    'key': 1
+
+                }]
 
             request_id = unique_key
-            question_type = 'action'
-            question_model = 'expTGIF-QAAction'
+            # question_type = 'action'
+            question_model = question_type_model[question_type] #'expTGIF-QAAction'
+
+            print('Data_dict:: ', data_dict)
+            print('question_type:: ', question_type, ' :: Question_model :: ', question_model)
             annotation_file = _dir + '/resources/tgif-qa/csv/infer_{}_question_' + request_id + '.csv'
             video_dir = UPLOAD_FOLDER
 
             write_request(data_dict, question_type, request_id)
 
             # return redirect(url_for('index'))
-            result = json.dumps(inference.process_all(request_id, question_type, question_model, annotation_file, video_dir))
+            result_dict = inference.process_all(request_id, question_type, question_model, annotation_file, video_dir)
+            result = json.dumps(result_dict)
             result = result.replace('<UNK>', '__UNK__')
             print(result)
 
