@@ -25,7 +25,9 @@ question_type_model = {
     'count': 'expTGIF-QACount',    
 }
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_url_path='', 
+            static_folder='resources')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def write_request(data_dict, question_type, request_id):
@@ -123,34 +125,18 @@ def index():
     # gif_name	question	a1	a2	a3	a4	a5	answer	vid_id	key
     return render_template('home.html')
 
+@app.route('/display/<filename>')
+def display_image(filename):
+    full_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    print('Filename:: ', full_filename)
+    url_file = url_for('static', filename='tgif-qa/video/' + filename)
+    print('Resource:: ', url_file)
+    return redirect(url_file, code=301)
 
-def sample_write_csv():
-    data_dict = dict({
-                'gif_name': str(1),
-                'question': str(2),
-                'a1': str(3),
-                'a2': str(4),
-                'a3': str(5),
-                'a4': str(6),
-                'a5': str(7),
-                'answer': str(8),
-                'vid_id': str(9),
-                'key': str(10)
 
-            })
-    
-    csv_filename = _dir + '/resources/tgif-qa/csv/infer_{}_question_{}.csv'
-    csv_filename = csv_filename.format('s', 'ss')
-    
-    with open(csv_filename, 'w') as f:
-        writer = csv.DictWriter(
-            f, 
-            delimiter='\t',
-            # gif_name	question	a1	a2	a3	a4	a5	answer	vid_id	key
-            fieldnames=['gif_name', 'question', 'a1', 'a2', 'a3', 'a4', 'a5', 'answer', 'vid_id', 'key']
-            )
-        writer.writeheader()
-        writer.writerow(data_dict)
+
+
+
 
 
 if __name__ == "__main__":

@@ -42,6 +42,10 @@ def validate(cfg, model, data, device, write_preds=False):
             batch_size = answers.size(0)
 
             logits = model(*batch_input).to(device)
+
+            print('LOGITS:: ', type(logits), logits.size() , logits)
+
+
             if cfg.dataset.question_type in ['action', 'transition']:
                 preds = torch.argmax(logits.view(batch_size, 5), dim=1)
                 agreeings = (preds == answers)
@@ -52,6 +56,8 @@ def validate(cfg, model, data, device, write_preds=False):
             else:
                 preds = logits.detach().argmax(1)
                 agreeings = (preds == answers)
+
+
             if write_preds:
                 if cfg.dataset.question_type not in ['action', 'transition', 'count']:
                     preds = logits.argmax(1)
@@ -64,11 +70,14 @@ def validate(cfg, model, data, device, write_preds=False):
                         all_preds.append(predict.item())
                     else:
                         all_preds.append(answer_vocab[predict.item()])
+
+
                 for gt in answers:
                     if cfg.dataset.question_type in ['count', 'transition', 'action']:
                         gts.append(gt.item())
                     else:
                         gts.append(answer_vocab[gt.item()])
+
                 for id in video_ids:
                     v_ids.append(id.cpu().numpy())
                 for ques_id in question_ids:

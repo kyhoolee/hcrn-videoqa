@@ -46,17 +46,48 @@ def sample_process_all():
     process_all(request_id, question_type, question_model, annotation_file, video_dir)
 
 
-def process_all(request_id, question_type, question_model, annotation_file, video_dir):
+def sample_process_cache():
+    request_id = 'f953d88f'
+    question_type = 'action'
+    annotation_file = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/resources/tgif-qa/csv/infer_{}_question_' + str(request_id) + '.csv'
+    video_dir = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/resources/tgif-qa/video/'
+    question_model = 'expTGIF-QAAction'
+
+    process_all(request_id, question_type, question_model, annotation_file, video_dir, is_cache=True)
+
+
+def sample_process_cache_frameqa():
+    request_id = 'e6118db3'
+    question_type = 'frameqa'
+    annotation_file = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/resources/tgif-qa/csv/infer_{}_question_' + str(request_id) + '.csv'
+    video_dir = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/resources/tgif-qa/video/'
+    question_model = 'expTGIF-QAFrameQA'
+
+    process_all(request_id, question_type, question_model, annotation_file, video_dir, is_cache=True)
+
+
+def sample_process_cache_count():
+    request_id = 'cb89a145'
+    question_type = 'count'
+    annotation_file = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/resources/tgif-qa/csv/infer_{}_question_' + str(request_id) + '.csv'
+    video_dir = '/home/kylee/work/projects/5_vqa/hcrn-videoqa/resources/tgif-qa/video/'
+    question_model = 'expTGIF-QACount'
+
+    process_all(request_id, question_type, question_model, annotation_file, video_dir, is_cache=True)
+
+
+def process_all(request_id, question_type, question_model, annotation_file, video_dir, is_cache=False):
         
     video_paths = load_video_paths_by_request(video_dir, annotation_file.format(question_type))
 
 
 
-
-    preprocess_features.preprocess_infer_motion(video_paths, request_id, question_type)
-    print('Done motion')
-    preprocess_features.preprocess_infer_appearance(video_paths, request_id, question_type)
-    print('Done appearance')
+    if not is_cache:
+        preprocess_features.preprocess_infer_motion(video_paths, request_id, question_type)
+        print('Done motion')
+        preprocess_features.preprocess_infer_appearance(video_paths, request_id, question_type)
+        print('Done appearance')
+    
     preprocess_questions.process_question(request_id, question_type, annotation_file)
     print('Done question')
     result = process_final(request_id, question_type, question_model)
@@ -126,4 +157,5 @@ def process_final(request_id, question_type, question_model):
 
 if __name__ == '__main__':
     # process_final()
-    sample_process_all()
+    # sample_process_all()
+    sample_process_cache_count()
