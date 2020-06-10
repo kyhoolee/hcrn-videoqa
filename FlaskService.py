@@ -60,6 +60,8 @@ def upload():
         file = request.files['file']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            unique_key = gen_key()
+            filename = str(unique_key) + str(filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             result = {'code':'ok', 'url': '/tgif-qa/video/' + filename, 'name': filename}
             return json.dumps(result)
