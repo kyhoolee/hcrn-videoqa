@@ -9,6 +9,7 @@ from torch import nn
 import torchvision
 import random
 import numpy as np
+from pathlib import Path
 
 from preprocess.models import resnext
 from preprocess.datautils import utils
@@ -272,6 +273,80 @@ def preprocess_infer_appearance(video_paths, request_id, question_type):
     outfile_path = args.outfile.format(args.question_type, args.dataset, args.question_type, args.feature_type, request_id)
     print(outfile_path)
     generate_h5(model, video_paths, args.num_clips, outfile_path)
+
+
+
+def preprocess_infer_motion_cache(video_paths, request_id, question_type, video_id):
+    parser = argparse.ArgumentParser()
+    global args
+    args = parser.parse_args()
+    # dataset info
+    args.dataset = 'tgif-qa-infer'
+    args.question_type = question_type # choices=['frameqa', 'count', 'transition', 'action', 'none']
+    # image sizes
+    args.num_clips = 8
+    # or memory exception
+    args.image_height = 112
+    args.image_width = 112
+    # network params
+    args.model = 'resnext101'
+    args.feature_type = 'motion'
+    args.seed = 666
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    
+    # video_paths = [(request_video_file, 1)] #tgif_qa.load_video_paths_by_request(args, request_file)
+    # load model
+    model = build_resnext()
+
+    args.outfile = 'data/tgif-qa-infer/{}/{}_{}_video_{}.h5'
+    outfile_path = args.outfile.format('video', args.dataset, args.feature_type, video_id)
+    print(outfile_path)
+    if check_file_exists(outfile_path):
+        print('Cached_file')
+        return
+    generate_h5(model, video_paths, args.num_clips, outfile_path)
+
+
+
+def preprocess_infer_appearance_cache(video_paths, request_id, question_type, video_id):
+    parser = argparse.ArgumentParser()
+    global args
+    args = parser.parse_args()
+    # dataset info
+    args.dataset = 'tgif-qa-infer'
+    args.question_type = question_type # choices=['frameqa', 'count', 'transition', 'action', 'none']
+    # image sizes
+    args.num_clips = 8
+    args.image_height = 224
+    args.image_width = 224
+    # network params
+    args.model = 'resnet101'
+    args.feature_type = 'appearance'
+    args.seed = 666
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    
+    # video_paths = [(request_video_file, 1)] #tgif_qa.load_video_paths_by_request(args, request_file)
+    # load model
+    model = build_resnet()
+
+    args.outfile = 'data/tgif-qa-infer/{}/{}_{}_video_{}.h5'
+    outfile_path = args.outfile.format('video', args.dataset, args.feature_type, video_id)
+    print(outfile_path)
+    if check_file_exists(outfile_path):
+        print('Cached_file')
+        return 
+    generate_h5(model, video_paths, args.num_clips, outfile_path)
+
+
+
+
+def check_file_exists(file_path):
+    my_file = Path(file_path)
+    if my_file.is_file():
+        return True
+    return False
 
 
 

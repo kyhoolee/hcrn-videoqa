@@ -125,12 +125,12 @@ def process_final(cfg):
                             cfg.dataset.vocab_json.format(cfg.dataset.name, cfg.dataset.question_type))
 
         cfg.dataset.appearance_feat = os.path.join(
-                            cfg.dataset.data_dir, 
-                            cfg.dataset.appearance_feat.format(cfg.dataset.name, cfg.dataset.question_type))
+                            cfg.dataset.video_dir, 
+                            cfg.dataset.appearance_feat.format(cfg.dataset.name))
 
         cfg.dataset.motion_feat = os.path.join(
-                            cfg.dataset.data_dir, 
-                            cfg.dataset.motion_feat.format(cfg.dataset.name, cfg.dataset.question_type))
+                            cfg.dataset.video_dir, 
+                            cfg.dataset.motion_feat.format(cfg.dataset.name))
     
     
     else:

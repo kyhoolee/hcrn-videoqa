@@ -7,7 +7,7 @@ import uuid
 import inference
 import json
 import gc
-
+from pathlib import Path
 
 _dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -52,18 +52,35 @@ def allowed_file(filename):
 def gen_key():
     return str(uuid.uuid4().hex[:8])
 
-@app.route(BASE_PATH + "/process", methods=['GET', 'POST'])
-def process():
+
+@app.route(BASE_PATH + "/upload", methods=['GET', 'POST'])
+def upload():
     gc.collect()
     if request.method == 'POST':
         file = request.files['file']
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            result = {'code':'ok', 'url': '/tgif-qa/video/' + filename, 'name': filename}
+            return json.dumps(result)
+        else: 
+            result = {'code':'error', 'message': 'Error file video extension - must be GIF'}
+            return json.dumps(result)
+
+
+
+@app.route(BASE_PATH + "/process", methods=['GET', 'POST'])
+def process():
+    gc.collect()
+    if request.method == 'POST':
+        filename = request.form['filename'].split('/')[-1]
+        print('Filename:: ', filename)
+        if allowed_file(filename):
             question = request.form['question']
             question_type = request.form['question_type']
             
             answer = request.form['answer']
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            
 
             unique_key = gen_key()
 
@@ -109,7 +126,8 @@ def process():
             write_request(data_dict, question_type, request_id)
 
             # return redirect(url_for('index'))
-            result_dict = inference.process_all(request_id, question_type, question_model, annotation_file, video_dir)
+            video_id = filename.split('.gif')[0]
+            result_dict = inference.process_all_cache(request_id, question_type, question_model, annotation_file, video_dir, video_id)
             result = json.dumps(result_dict)
             result = result.replace('<UNK>', '__UNK__')
             print(result)
@@ -125,7 +143,7 @@ def index():
     # gif_name	question	a1	a2	a3	a4	a5	answer	vid_id	key
     return render_template('home.html')
 
-@app.route('/display/<filename>')
+@app.route(BASE_PATH + '/display/<filename>')
 def display_image(filename):
     full_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     print('Filename:: ', full_filename)
@@ -135,9 +153,15 @@ def display_image(filename):
 
 
 
-
+@app.route(BASE_PATH + '/list_image')
+def list_image():
+    paths = sorted(Path(app.config['UPLOAD_FOLDER']).iterdir(), key=os.path.getmtime)
+    result = [{'url': '/tgif-qa/video/' + p.name, 'name': p.name} for p in paths]
+    result.reverse()
+    return json.dumps(result)
 
 
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5010, debug=True)
+    # print(list_image())

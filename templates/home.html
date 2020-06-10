@@ -4,24 +4,107 @@
 <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
-        $(document).ready(function () {
-            $(".loader").hide();
-            //https://stackoverflow.com/questions/61916331/re-uploading-a-file-with-ajax-after-it-was-changed-causes-neterr-upload-file-c
-            
 
-            $("form#dataAction").submit(function (e) {
-                console.log('Hello click button');
+        function cellImageClick(url) {
+            $(".questionImg").attr('src', url);
+
+            $('html, body').animate({
+                scrollTop: $(".titleQuestionImg").offset().top
+            }, 1000);
+        }
+
+        function loadImage() {
+            $.getJSON('/videoqa/list_image', function(data) {
+                //data is the JSON string
+                console.log('JSON-LIST-IMAGE:: ');
+                var i = 0;
+                $('.image_list').empty();
+                row = $('<div>', {class: 'row'});
+                columns = []
+                for(i = 0 ; i < 4 ; i ++) {
+                    
+                    columns.push($('<div>', {class: 'column'}))
+                    row.append(columns[i])
+                }
+
+                for(i = 0 ; i < data.length ; i ++) {
+                    console.log(data[i]);
+
+                    img = 
+                        $(
+                            '<img>',
+                            {
+                                id: data[i]['name'],
+                                src: data[i]['url'],
+                                class: 'cell_img', 
+                                onclick: 'cellImageClick(this.src)'
+                            }
+                        );
+
+                    div = $('<div>', {class:'cell'});
+                    div.append(img)
+                    
+                    index_col = i % 4;
+                    columns[index_col].append(div);
+                } 
+
+                $('.image_list').append(row);
+
+            });
+        }
+
+
+        function uploadImage(imgUpload, questionImg, btnImgUpload) {
+            $("form#" + imgUpload).submit(function (e) {
                 e.preventDefault();
                 var formData = new FormData(this);
                 formData.append('question_type', 'action');
                 file_name = formData.get('file');
                 console.log('File_name:: ' + file_name.name);
+
+
+                $("#" + btnImgUpload).attr('disabled', 'disabled');
+                $(".tablink").attr('disabled', 'disabled');
+
+                $.ajax({
+                    url: '/videoqa/upload',
+                    enctype: 'multipart/form-data',
+                    type: 'POST',
+                    data: formData,
+                    success: function (data) {
+                        var obj = JSON.parse(data)
+                        $("#" + questionImg).attr('src',obj.url);
+                        loadImage();
+                        $("#" + btnImgUpload).removeAttr('disabled');
+                    },
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    error: function (e) {
+                        console.log("ERROR : ", e);
+                        $("#" + btnImgUpload).removeAttr('disabled');
+
+                    }
+                }).done(function () {
+                    $(".tablink").removeAttr('disabled');
+                });
+            });
+        }
+
+
+        function submitQuestion(form, questionImg, btnSubmit, result, questionType) {
+            $("form#" + form).submit(function (e) {
+                console.log('Hello click button');
+                e.preventDefault();
+                var formData = new FormData(this);
+                formData.append('question_type', questionType);
+                formData.append('filename', $('#' + questionImg).attr('src'))
                 //console.log(formData)
 
                 $(".loader").show();
-                $("#resultAction").hide();
+                $("#" + result).hide();
 
-                $("#btnActionSubmit").attr('disabled', 'disabled');
+                $("#" + btnSubmit).attr('disabled', 'disabled');
                 $(".tablink").attr('disabled', 'disabled');
 
                 $.ajax({
@@ -31,18 +114,24 @@
                     data: formData,
                     success: function (data) {
                         //alert(data);
-                        $("#resultAction").show();
+                        $("#" + result).show();
                         
                         var obj = JSON.parse(data)[0]
                         image_name = '/tgif-qa/video/' + obj.video_name
                         console.log('JSON:: ' + obj)
                         console.log('IMG:: ' + image_name)
-                        $("#resultAction").text('Predicted-answer-index: ' + obj.answer);
-                        $("#imgAction").attr('src',image_name);
+
+                        if (questionType == 'action' || questionType == 'transition') {
+                            answer_key = 'a' + (parseInt(obj.answer, 10) + 1).toString()
+                            $("#" + result).html('Predicted-answer-index: ' + obj.answer + ' <p> Answer: ' + formData.get(answer_key) + ' </p>');
+                        } else {
+                            $("#" + result).html('Predicted-answer: ' + obj.answer);
+                        }
+                        // $("#imgAction").attr('src',image_name);
                         $(window).scrollTop($('#imgAction').offset().top);
 
 
-                        $("#btnActionSubmit").removeAttr('disabled');
+                        $("#" + btnSubmit).removeAttr('disabled');
                         $(".tablink").removeAttr('disabled');
                         $(".loader").hide();
 
@@ -52,10 +141,10 @@
                     contentType: false,
                     processData: false,
                     error: function (e) {
-                        $("#resultAction").show();
-                        $("#resultAction").text(e.responseText);
+                        $("#" + result).show();
+                        $("#" + result).text(e.responseText);
                         console.log("ERROR : ", e);
-                        $("#btnActionSubmit").removeAttr('disabled');
+                        $("#" + btnSubmit).removeAttr('disabled');
                         $(".tablink").removeAttr('disabled');
                         $(".loader").hide();
 
@@ -64,157 +153,28 @@
                     $(".loader").hide();
                 });
             });
+        }
 
-            $("form#dataFrameQA").submit(function (e) {
-                console.log('Hello click button');
-                e.preventDefault();
-                var formData = new FormData(this);
-                formData.append('question_type', 'frameqa')
-                //console.log(formData)
+        $(document).ready(function () {
+            $(".loader").hide();
+            //https://stackoverflow.com/questions/61916331/re-uploading-a-file-with-ajax-after-it-was-changed-causes-neterr-upload-file-c
+            
 
-                $(".loader").show();
-                $("#resultFrameQA").hide();
-
-                $("#btnFrameQASubmit").attr('disabled', 'disabled');
-                $(".tablink").attr('disabled', 'disabled');
-
-                $.ajax({
-                    url: '/videoqa/process',
-                    enctype: 'multipart/form-data',
-                    type: 'POST',
-                    data: formData,
-                    success: function (data) {
-                        $("#resultFrameQA").show();
-                        var obj = JSON.parse(data)[0]
-                        image_name = '/tgif-qa/video/' + obj.video_name
-                        console.log('JSON:: ' + obj)
-                        console.log('IMG:: ' + image_name)
-                        $("#resultFrameQA").text('Predicted-answer: ' + obj.answer);
-                        $("#imgFrameQA").attr('src',image_name);
-                        $(window).scrollTop($('#imgFrameQA').offset().top);
-
-                        $("#btnFrameQASubmit").removeAttr('disabled');
-                        $(".tablink").removeAttr('disabled');
-                        $(".loader").hide();
-                    },
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    error: function (e) {
-                        $("#resultFrameQA").show();
-                        $("#resultFrameQA").text(e.responseText);
-                        console.log("ERROR : ", e);
-                        $("#btnFrameQASubmit").removeAttr('disabled');
-                        $(".tablink").removeAttr('disabled');
-                        $(".loader").hide();
-
-                    }
-                }).done(function () {
-                    $(".loader").hide();
-                });
-            });
+            loadImage();
 
 
-            $("form#dataTransition").submit(function (e) {
-                console.log('Hello click button');
-                e.preventDefault();
-                var formData = new FormData(this);
-                formData.append('question_type', 'transition')
-                //console.log(formData)
+            uploadImage('imgUploadAction', 'actionQuestionImg', 'btnActionImgUpload');
+            submitQuestion('dataAction', 'actionQuestionImg', 'btnActionSubmit', 'resultAction', 'action');
 
-                $(".loader").show();
-                $("#resultTransition").hide();
+            uploadImage('imgUploadFrameQA', 'frameQAQuestionImg', 'btnFrameQAImgUpload');
+            submitQuestion('dataFrameQA', 'frameQAQuestionImg', 'btnFrameQASubmit', 'resultFrameQA', 'frameqa');
 
-                $("#btnTransitionSubmit").attr('disabled', 'disabled');
-                $(".tablink").attr('disabled', 'disabled');
+            uploadImage('imgUploadTransition', 'transitionQuestionImg', 'btnTransitionImgUpload');
+            submitQuestion('dataTransition', 'transitionQuestionImg', 'btnTransitionSubmit', 'resultTransition', 'transition');
 
-                $.ajax({
-                    url: '/videoqa/process',
-                    enctype: 'multipart/form-data',
-                    type: 'POST',
-                    data: formData,
-                    success: function (data) {
-                        $("#resultTransition").show();
-                        var obj = JSON.parse(data)[0]
-                        image_name = '/tgif-qa/video/' + obj.video_name
-                        console.log('JSON:: ' + obj)
-                        console.log('IMG:: ' + image_name)
-                        $("#resultTransition").text('Predicted-answer-index: ' + obj.answer);
-                        $("#imgTransition").attr('src',image_name);
-                        $(window).scrollTop($('#imgTransition').offset().top);
-                        
-                        
-                        $("#btnTransitionSubmit").removeAttr('disabled');
-                        $(".tablink").removeAttr('disabled');
-                        $("#overlayTransition").fadeOut(300);
-                        $(".loader").hide();
-                    },
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    error: function (e) {
-                        $("#resultTransition").show();
-                        $("#resultTransition").text(e.responseText);
-                        console.log("ERROR : ", e);
-                        $("#btnTransitionSubmit").removeAttr('disabled');
-                        $(".tablink").removeAttr('disabled');
-                        $(".loader").hide();
-
-                    }
-                }).done(function () {
-                    $(".loader").hide();
-                });
-            });
-
-
-            $("form#dataCount").submit(function (e) {
-                console.log('Hello click button');
-                e.preventDefault();
-                var formData = new FormData(this);
-                formData.append('question_type', 'count')
-                //console.log(formData)
-
-                $(".loader").show();
-                $("#resultCount").hide();
-
-                $("#btnCountSubmit").attr('disabled', 'disabled');
-                $(".tablink").attr('disabled', 'disabled');
-
-                $.ajax({
-                    url: '/videoqa/process',
-                    enctype: 'multipart/form-data',
-                    type: 'POST',
-                    data: formData,
-                    success: function (data) {
-                        $("#resultCount").show();
-                        var obj = JSON.parse(data)[0]
-                        image_name = '/tgif-qa/video/' + obj.video_name
-                        console.log('JSON:: ' + obj)
-                        console.log('IMG:: ' + image_name)
-                        $("#resultCount").text('Predicted-answer: ' + obj.answer);
-                        $("#imgCount").attr('src',image_name);
-                        $(window).scrollTop($('#imgCount').offset().top);
-                        
-                        $("#btnCountSubmit").removeAttr('disabled');
-                        $(".tablink").removeAttr('disabled');
-                        $("#overlayCount").fadeOut(300);
-                        $(".loader").hide();
-                    },
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    error: function (e) {
-                        $("#resultCount").show();
-                        $("#resultCount").text(e.responseText);
-                        console.log("ERROR : ", e);
-                        $("#btnCountSubmit").removeAttr('disabled');
-                        $(".tablink").removeAttr('disabled');
-                        $(".loader").hide();
-                    }
-                }).done(function () {
-                    $(".loader").hide();
-                });
-            });                        
+            uploadImage('imgUploadCount', 'countQuestionImg', 'btnCountImgUpload');
+            submitQuestion('dataCount', 'countQuestionImg', 'btnCountSubmit', 'resultAction', 'count');
+                                
 
         });
 
@@ -233,6 +193,63 @@
             margin: 0;
             font-family: Arial;
         }
+
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0 4px;
+        }
+
+        /* Create four equal columns that sits next to each other */
+        .column {
+            flex: 25%;
+            max-width: 25%;
+            padding: 0 4px;
+        }
+
+        .cell {
+            margin-top: 8px;
+            /*vertical-align: middle;
+            object-fit: none;
+            vertical-align:middle;
+
+            display:table-cell;
+            */
+            max-height: 400px;
+            text-align: center;
+            display: block;
+            overflow: hidden;
+
+            align-items: center;
+            justify-content: center;
+            
+            width: 100%;
+        }
+
+        .cell_img {
+            width: 100%;
+            height: 100%; 
+            display: block;
+            object-position: center;
+        } 
+
+        /* Responsive layout - makes a two column-layout instead of four columns */
+        @media screen and (max-width: 800px) {
+            .column {
+                flex: 50%;
+                max-width: 50%;
+            }
+        }
+
+        /* Responsive layout - makes the two columns stack on top of each other instead of next to each other */
+        @media screen and (max-width: 600px) {
+            .column {
+                flex: 100%;
+                max-width: 100%;
+            }
+        }
+        
 
         /* Style tab links */
         .tablink {
@@ -253,6 +270,18 @@
             border: none;
             color: white;
             padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+        }
+
+        .button_upload {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            margin-right: 20px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -322,8 +351,21 @@
 
     <div id="Action" class="tabcontent">
         <h1>TGIF-QA action - multiple choices question</h1>
+
+        <form id="imgUploadAction" action="/process" method=post enctype=multipart/form-data>
+            <label>Upload gif file</label> <input class="button_upload" type=file name=file>
+            <input class="button" id="btnActionImgUpload" type=submit value=Submit>
+        </form>
+        <p></p>
+        <hr>
+        <p>Or choose gif file from list</p>
+        <p><div class="image_list" style="height:500px;overflow:auto;"></div></p>
+        <hr>
+        <p></p>
         <form id="dataAction" action="/process" method=post enctype=multipart/form-data>
-            <p><label>Gif file</label> <input class="button" type=file name=file></p>
+            <p><div class='titleQuestionImg'>Choosen question Gif</div></p>
+            <p><img id='actionQuestionImg' class='questionImg' style="max-height:300px;" src=''></p>
+            
             <p><label>Question</label> <input type="text" name="question" placeholder="what does somebody do in xxx times ?"></p>
             <p><label>List of answer choices</label>
             <p>0 <input type="text" name="a1" placeholder="do something">
@@ -343,8 +385,20 @@
 
     <div id="Frameqa" class="tabcontent">
         <h1>TGIF-QA frameqa - openended question</h1>
+        <form id="imgUploadFrameQA" action="/process" method=post enctype=multipart/form-data>
+            <label>Upload gif file</label> <input class="button_upload" type=file name=file>
+            <input class="button" id="btnFrameQAImgUpload" type=submit value=Submit>
+        </form>
+        <p></p>
+        <hr>
+        <p>Or choose gif file from list</p>
+        <p><div class="image_list" style="height:500px;overflow:auto;"></div></p>
+        <hr>
+        <p></p>
         <form id="dataFrameQA" action="/process" method=post enctype=multipart/form-data>
-            <p>Gif file <input class="button" type=file name=file></p>
+            <p><div class='titleQuestionImg'>Choosen question Gif</div></p>
+            <p><img id='frameQAQuestionImg' class='questionImg' style="max-height:300px;" src=''></p>
+            
             <p>Question <input type="text" name="question" placeholder="what / how / - somebody / something - do ?"></p>
             <p>Your preference answer</p>
             <p>answer <input type="text" name="answer" placeholder="something"></p>
@@ -356,9 +410,20 @@
     </div>
 
     <div id="Transition" class="tabcontent">
-        <h1>TGIF-QA action - multiple choices question</h1>
+        <h1>TGIF-QA transition - multiple choices question</h1>
+        <form id="imgUploadTransition" action="/process" method=post enctype=multipart/form-data>
+            <label>Upload gif file</label> <input class="button_upload" type=file name=file>
+            <input class="button" id="btnTransitionImgUpload" type=submit value=Submit>
+        </form>
+        <p></p>
+        <hr>
+        <p>Or choose gif file from list</p>
+        <p><div class="image_list" style="height:500px;overflow:auto;"></div></p>
+        <hr>
+        <p></p>
         <form id="dataTransition" action="/process" method=post enctype=multipart/form-data>
-            <p>Gif file <input class="button" type=file name=file></p>
+            <p><div class='titleQuestionImg'>Choosen question Gif</div></p>
+            <p><img id='transitionQuestionImg' class='questionImg' style="max-height:300px;" src=''></p>
             <p>Question <input type="text" name="question" placeholder="what is happening / do something - before / after ?"></p>
             <p>List of answer choices</p>
             <p>0 <input type="text" name="a1" placeholder="do / something"></p>
@@ -377,8 +442,19 @@
 
     <div id="Count" class="tabcontent">
         <h1>TGIF-QA count - openended question</h1>
+        <form id="imgUploadCount" action="/process" method=post enctype=multipart/form-data>
+            <label>Upload gif file</label> <input class="button_upload" type=file name=file>
+            <input class="button" id="btnCountImgUpload" type=submit value=Submit>
+        </form>
+        <p></p>
+        <hr>
+        <p>Or choose gif file from list</p>
+        <p><div class="image_list" style="height:500px;overflow:auto;"></div></p>
+        <hr>
+        <p></p>
         <form id="dataCount" action="/process" method=post enctype=multipart/form-data>
-            <p>Gif file <input class="button" type=file name=file></p>
+            <p><div class='titleQuestionImg'>Choosen question Gif</div></p>
+            <p><img id='countQuestionImg' class='questionImg' style="max-height:300px;" src=''></p>
             <p>Question <input type="text" name="question" placeholder="how many times something / somembody does something ?"></p>
             <p>Your preference answer</p>
             <p>answer <input type="text" name="answer" placeholder="1,2,3, ..."></p>
@@ -403,6 +479,8 @@
             }
             document.getElementById(pageName).style.display = "block";
             elmnt.style.backgroundColor = color;
+
+            loadImage();
         }
 
         // Get the element with id="defaultOpen" and click on it
