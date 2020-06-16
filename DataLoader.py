@@ -33,6 +33,7 @@ def invert_dict(d):
 
 def load_vocab(path):
     with open(path, 'r') as f:
+        print('DICT_PATH:: ', path)
         vocab = json.load(f)
         vocab['question_idx_to_token'] = invert_dict(vocab['question_token_to_idx'])
         vocab['answer_idx_to_token'] = invert_dict(vocab['answer_token_to_idx'])

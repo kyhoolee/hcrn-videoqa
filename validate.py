@@ -55,12 +55,14 @@ def validate(cfg, model, data, device, write_preds=False):
                 batch_mse = (preds - answers) ** 2
             else:
                 preds = logits.detach().argmax(1)
+                print('FRAMEQA-PREDs:: ', preds)
                 agreeings = (preds == answers)
 
 
             if write_preds:
                 if cfg.dataset.question_type not in ['action', 'transition', 'count']:
                     preds = logits.argmax(1)
+
                 if cfg.dataset.question_type in ['action', 'transition']:
                     answer_vocab = data.vocab['question_answer_idx_to_token']
                 else:
@@ -69,6 +71,8 @@ def validate(cfg, model, data, device, write_preds=False):
                     if cfg.dataset.question_type in ['count', 'transition', 'action']:
                         all_preds.append(predict.item())
                     else:
+                        print('FRAMEQA-pred.item:: ', predict.item())
+                        # print('FRAMEQA-answer_vocab:: ', answer_vocab)
                         all_preds.append(answer_vocab[predict.item()])
 
 
@@ -93,7 +97,7 @@ def validate(cfg, model, data, device, write_preds=False):
     if not write_preds:
         return acc
     else:
-        return acc, all_preds, gts, v_ids, q_ids
+        return acc, all_preds, gts, v_ids, q_ids, logits
 
 
 def process_final(cfg):
@@ -164,7 +168,34 @@ def process_final(cfg):
     model.load_state_dict(loaded['state_dict'])
 
     if cfg.test.write_preds:
-        acc, preds, gts, v_ids, q_ids = validate(cfg, model, test_loader, device, cfg.test.write_preds)
+        acc, preds, gts, v_ids, q_ids, logits = validate(cfg, model, test_loader, device, cfg.test.write_preds)
+        # print('===Question_type', cfg.dataset.question_type)
+        # print('====LOGIT ', logits)
+        detail = []
+
+        if cfg.dataset.question_type in ['action', 'transition']:
+            sm = torch.nn.Softmax()
+            probs = sm(logits.t()) 
+            print('>>>> Probs: ', type(probs), probs.size(), probs)
+            detail = probs.numpy().tolist()
+
+        elif cfg.dataset.question_type in ['frameqa']:
+            sm = torch.nn.Softmax()
+            probs = sm(logits) 
+            print('>>>> Probs: ', type(probs), probs.size(), probs)
+            answer_vocab = test_loader.vocab['answer_idx_to_token']
+            values, idx = torch.topk(probs, 5)
+            print('>>>Top5 ', idx)
+            top_answer = []
+            i = 0 
+            for predict in idx:
+                print('FRAMEQA-pred.item:: ', list(predict.numpy()), list(values[i].numpy()))
+                # print('FRAMEQA-answer_vocab:: ', answer_vocab)
+                top_answer.append(([answer_vocab[ix] for ix in list(predict.numpy())], [float(v) for v in list(values[i].numpy())] ))
+                i += 1
+            print('FRAMEQA-topk:: ', top_answer)
+            detail = top_answer
+
 
         sys.stdout.write('~~~~~~ Test Accuracy: {test_acc} ~~~~~~~\n'.format(
             test_acc=colored("{:.4f}".format(acc), "red", attrs=['bold'])))
@@ -194,10 +225,14 @@ def process_final(cfg):
                 dict[str(org_q_ids[idx])] = [org_v_names[idx], questions[idx], ans_candidates[idx]]
 
             instances = [
-                {'video_id': video_id, 'question_id': q_id, 'video_name': dict[str(q_id)][0], 'question': [vocab[word.item()] for word in dict[str(q_id)][1] if word != 0],
-                 'answer': answer,
-                 'prediction': pred} for video_id, q_id, answer, pred in
-                zip(np.hstack(v_ids).tolist(), np.hstack(q_ids).tolist(), gts, preds)]
+                {'video_id': video_id, 
+                'question_id': q_id, 
+                'video_name': dict[str(q_id)][0], 
+                'question': [vocab[word.item()] for word in dict[str(q_id)][1] if word != 0],
+                'answer': answer,
+                'prediction': pred,
+                'detail': d} for video_id, q_id, answer, pred, d in
+                zip(np.hstack(v_ids).tolist(), np.hstack(q_ids).tolist(), gts, preds, detail)]
             # write preditions to json file
             # with open(preds_file, 'w') as f:
             #     json.dump(instances, f)
@@ -236,11 +271,27 @@ def process_final(cfg):
 
             for idx in range(len(org_q_ids)):
                 dict[str(org_q_ids[idx])] = [org_v_names[idx], questions[idx]]
-            instances = [
-                {'video_id': video_id, 'question_id': q_id, 'video_name': str(dict[str(q_id)][0]), 'question': [vocab[word.item()] for word in dict[str(q_id)][1] if word != 0],
-                 'answer': answer,
-                 'prediction': pred} for video_id, q_id, answer, pred in
-                zip(np.hstack(v_ids).tolist(), np.hstack(q_ids).tolist(), gts, preds)]
+
+
+            if cfg.dataset.question_type == 'frameqa':
+                instances = [
+                    {'video_id': video_id, 
+                    'question_id': q_id, 
+                    'video_name': str(dict[str(q_id)][0]), 
+                    'question': [vocab[word.item()] for word in dict[str(q_id)][1] if word != 0],
+                    'answer': answer,
+                    'prediction': pred,
+                    'detail': d} for video_id, q_id, answer, pred, d in
+                    zip(np.hstack(v_ids).tolist(), np.hstack(q_ids).tolist(), gts, preds, detail)]
+            else:
+                instances = [
+                    {'video_id': video_id, 
+                    'question_id': q_id, 
+                    'video_name': str(dict[str(q_id)][0]), 
+                    'question': [vocab[word.item()] for word in dict[str(q_id)][1] if word != 0],
+                    'answer': answer,
+                    'prediction': pred} for video_id, q_id, answer, pred in
+                    zip(np.hstack(v_ids).tolist(), np.hstack(q_ids).tolist(), gts, preds)]
             # write preditions to json file
             # with open(preds_file, 'w') as f:
             #     json.dump(instances, f)

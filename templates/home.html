@@ -3,6 +3,7 @@
 
 <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <script>
 
         function cellImageClick(url) {
@@ -118,14 +119,64 @@
                         
                         var obj = JSON.parse(data)[0]
                         image_name = '/tgif-qa/video/' + obj.video_name
-                        console.log('JSON:: ' + obj)
+                        console.log('JSON:: ' + data)
                         console.log('IMG:: ' + image_name)
 
                         if (questionType == 'action' || questionType == 'transition') {
-                            answer_key = 'a' + (parseInt(obj.answer, 10) + 1).toString()
-                            $("#" + result).html('Predicted-answer-index: ' + obj.answer + ' <p> Answer: ' + formData.get(answer_key) + ' </p>');
+                            answer_key = 'a' + (parseInt(obj.prediction, 10) + 1).toString()
+
+                            detail = obj.detail
+                            percent = []
+                            display_bar = ''
+                            var i;
+                            for (i = 0; i < detail.length; i++) {
+                                val = detail[i] * 100;
+                                percent[i] = val.toFixed(3).toString() + "%";
+                                answer_idx = 'a' + (i + 1).toString()
+                                ans = formData.get(answer_idx)
+                                display_bar += `
+                                    ${ans}
+                                    <div class="w3-light-grey">
+                                        <div class="w3-container w3-green w3-center" style="width:${percent[i]}">${percent[i]}</div>
+                                    </div><br>
+
+                                `
+                            }
+
+
+                            $("#" + result).html(
+                                'Predicted-answer-index: ' + obj.prediction + ' <p> Answer: ' + formData.get(answer_key) + ' </p>'
+                                + display_bar
+                            );
+
+
+
+                        } else if (questionType == 'frameqa' ) {
+
+                            detail = obj.detail
+                            percent = []
+                            display_bar = ''
+                            var i;
+                            for (i = 0; i < detail[0].length; i++) {
+                                val = detail[1][i] * 100;
+                                percent[i] = val.toFixed(3).toString() + "%";
+                                ans = detail[0][i]
+                                display_bar += `
+                                    ${ans}
+                                    <div class="w3-light-grey">
+                                        <div class="w3-container w3-green w3-center" style="width:${percent[i]}">${percent[i]}</div>
+                                    </div><br>
+
+                                `
+                            }
+
+
+                            $("#" + result).html(
+                                'Predicted-answer: ' + obj.prediction + '<p></p>'
+                                + display_bar
+                            );
                         } else {
-                            $("#" + result).html('Predicted-answer: ' + obj.answer);
+                            $("#" + result).html('Predicted-answer: ' + obj.prediction);
                         }
                         // $("#imgAction").attr('src',image_name);
                         $(window).scrollTop($('#imgAction').offset().top);
@@ -173,7 +224,7 @@
             submitQuestion('dataTransition', 'transitionQuestionImg', 'btnTransitionSubmit', 'resultTransition', 'transition');
 
             uploadImage('imgUploadCount', 'countQuestionImg', 'btnCountImgUpload');
-            submitQuestion('dataCount', 'countQuestionImg', 'btnCountSubmit', 'resultAction', 'count');
+            submitQuestion('dataCount', 'countQuestionImg', 'btnCountSubmit', 'resultCount', 'count');
                                 
 
         });
