@@ -192,7 +192,7 @@ def generate_h5(model, video_ids, num_clips, outfile):
                 if IS_GPU:
                     clip_torch = torch.FloatTensor(np.asarray(clips)).cuda()
                 else:
-                    clip_torch = torch.FloatTensor(np.asarray(clips)).cuda()
+                    clip_torch = torch.FloatTensor(np.asarray(clips))
                     
                 if valid:
                     clip_feat = model(clip_torch)  # (8, 2048)
