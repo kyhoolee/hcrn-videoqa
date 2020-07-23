@@ -174,7 +174,7 @@ def process_final(cfg):
         detail = []
 
         if cfg.dataset.question_type in ['action', 'transition']:
-            sm = torch.nn.Softmax(dim=0)
+            sm = torch.nn.Softmax(dim=1)
             print('origin_value::', logits.t())
             probs = sm(logits.t()) 
             print('>>>> Probs: ', type(probs), probs.size(), probs)
