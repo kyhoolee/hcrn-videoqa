@@ -69,7 +69,12 @@ def upload():
             result = {'code':'error', 'message': 'Error file video extension - must be GIF'}
             return json.dumps(result)
 
-
+def isInt(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 @app.route(BASE_PATH + "/process", methods=['GET', 'POST'])
 def process():
@@ -93,6 +98,10 @@ def process():
                 a3 = request.form['a3']
                 a4 = request.form['a4']
                 a5 = request.form['a5']
+                a = '0'
+                if isInt(str(answer)):
+                    a = str(answer)
+
                 data_dict = [{
                     'gif_name': str(filename),
                     'question': str(question),
@@ -101,7 +110,7 @@ def process():
                     'a3': str(a3),
                     'a4': str(a4),
                     'a5': str(a5),
-                    'answer': str(answer),
+                    'answer': a,
                     'vid_id': str(unique_key),
                     'key': 1
 
